@@ -1,0 +1,143 @@
+import { sendMail } from '../../utils/mailer.js';
+import ApiError from '../../utils/apiError.js';
+import logger from '../../utils/logger.js';
+import envConfig from '../../config/env.config.js';
+
+class CareerService {
+  /**
+   * Process job application submission & send direct email notification with resume attachment
+   * @param {Object} applicationData - Applicant details from request body
+   * @param {Object} file - Resume file object from Multer (in-memory buffer)
+   */
+  async processJobApplication(applicationData, file) {
+    if (!file || !file.buffer) {
+      throw new ApiError(400, 'Resume upload is required. Please attach a valid PDF, DOC, or DOCX resume file.');
+    }
+
+    const {
+      fullName,
+      email,
+      mobileNumber,
+      currentCity,
+      positionInterestedIn,
+      totalExperience,
+      currentCompany,
+      currentDesignation,
+      noticePeriod,
+      whyJoinXtorc
+    } = applicationData;
+
+    const emailSubject = `[New Job Application] ${positionInterestedIn} - ${fullName}`;
+
+    const plainTextBody = `
+New Job Application Received - XTORC Careers
+
+Personal Details:
+-----------------
+Full Name: ${fullName}
+Email: ${email}
+Mobile Number: ${mobileNumber}
+Current City: ${currentCity}
+
+Professional Details:
+---------------------
+Position Applied For: ${positionInterestedIn}
+Total Experience: ${totalExperience}
+Current Company: ${currentCompany || 'N/A'}
+Current Designation: ${currentDesignation || 'N/A'}
+Notice Period: ${noticePeriod}
+
+About the Applicant:
+--------------------
+Why do you want to join XTORC?
+${whyJoinXtorc}
+
+Resume Attached: ${file.originalname} (${(file.size / 1024 / 1024).toFixed(2)} MB)
+    `;
+
+    const htmlBody = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333333; background-color: #f4f6f9; margin: 0; padding: 20px; }
+          .card { max-width: 650px; margin: 0 auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid #e1e4e8; }
+          .header { background: #003366; color: #ffffff; padding: 24px; text-align: center; }
+          .header h2 { margin: 0; font-size: 22px; font-weight: 600; }
+          .content { padding: 24px; }
+          .section-title { font-size: 16px; font-weight: 700; color: #003366; border-bottom: 2px solid #e1e4e8; padding-bottom: 6px; margin-top: 20px; margin-bottom: 14px; }
+          .field-group { margin-bottom: 10px; display: flex; }
+          .label { font-weight: 600; width: 180px; color: #555555; }
+          .value { flex: 1; color: #111111; }
+          .text-box { background: #f8f9fa; border-left: 4px solid #003366; padding: 14px; margin-top: 10px; font-style: italic; border-radius: 4px; }
+          .footer { background: #f8f9fa; text-align: center; padding: 14px; font-size: 13px; color: #777777; border-top: 1px solid #e1e4e8; }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <div class="header">
+            <h2>XTORC Career Application</h2>
+          </div>
+          <div class="content">
+            <div class="section-title">Applicant Personal Information</div>
+            <div class="field-group"><span class="label">Full Name:</span><span class="value"><strong>${fullName}</strong></span></div>
+            <div class="field-group"><span class="label">Email Address:</span><span class="value"><a href="mailto:${email}">${email}</a></span></div>
+            <div class="field-group"><span class="label">Mobile Number:</span><span class="value"><a href="tel:${mobileNumber}">${mobileNumber}</a></span></div>
+            <div class="field-group"><span class="label">Current City:</span><span class="value">${currentCity}</span></div>
+
+            <div class="section-title">Professional Details</div>
+            <div class="field-group"><span class="label">Position Interested In:</span><span class="value"><strong>${positionInterestedIn}</strong></span></div>
+            <div class="field-group"><span class="label">Total Experience:</span><span class="value">${totalExperience}</span></div>
+            <div class="field-group"><span class="label">Current Company:</span><span class="value">${currentCompany || 'N/A'}</span></div>
+            <div class="field-group"><span class="label">Current Designation:</span><span class="value">${currentDesignation || 'N/A'}</span></div>
+            <div class="field-group"><span class="label">Notice Period:</span><span class="value">${noticePeriod}</span></div>
+
+            <div class="section-title">Why Applicant Wants to Join XTORC</div>
+            <div class="text-box">${whyJoinXtorc.replace(/\n/g, '<br/>')}</div>
+          </div>
+          <div class="footer">
+            Attached File: <strong>${file.originalname}</strong> (${(file.size / 1024 / 1024).toFixed(2)} MB)<br/>
+            This email was automatically generated by the XTORC Careers Portal.
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Prepare attachment from in-memory Buffer (no disk write)
+    const attachments = [
+      {
+        filename: file.originalname,
+        content: file.buffer,
+        contentType: file.mimetype
+      }
+    ];
+
+    try {
+      await sendMail({
+        to: envConfig.smtp.hrEmail,
+        subject: emailSubject,
+        text: plainTextBody,
+        html: htmlBody,
+        attachments
+      });
+
+      logger.info(`Job application from ${email} for position ${positionInterestedIn} processed and sent successfully.`);
+    } catch (mailError) {
+      logger.error(`Failed to send job application email for ${email}: ${mailError.message}`, {
+        applicant: fullName,
+        position: positionInterestedIn,
+        error: mailError
+      });
+      throw new ApiError(500, 'Your application was received, but we encountered an issue sending the notification email. Please try again or contact HR directly.');
+    }
+
+    return {
+      fullName,
+      email,
+      positionInterestedIn
+    };
+  }
+}
+
+export default new CareerService();
