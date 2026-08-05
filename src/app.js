@@ -22,7 +22,9 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 // Security Middlewares
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
 
 // CORS Setup
 const allowedOrigins = [

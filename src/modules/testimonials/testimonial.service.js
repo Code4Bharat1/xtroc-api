@@ -14,10 +14,11 @@ class TestimonialService {
    * Always saved with status = 'pending'
    */
   async createTestimonial(data, file) {
-    let profileImageUrl = '';
-    if (file) {
-      profileImageUrl = `/uploads/avatars/${file.filename}`;
+    if (!file) {
+      throw new ApiError(400, 'Profile photo is required. Please upload your photo.');
     }
+
+    const profileImageUrl = `/uploads/avatars/${file.filename}`;
 
     const testimonial = await Testimonial.create({
       fullName: data.fullName,
