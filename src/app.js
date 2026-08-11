@@ -28,10 +28,7 @@ app.use(helmet({
 
 // CORS Setup
 const allowedOrigins = [
-  envConfig.clientUrl,
-  'http://localhost:3000',
-  'http://localhost:3001',
-  'http://127.0.0.1:3000'
+  envConfig.clientUrl
 ];
 
 app.use(
