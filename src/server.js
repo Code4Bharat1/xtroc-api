@@ -1,7 +1,9 @@
 import app from './app.js';
 import envConfig from './config/env.config.js';
 import connectDB from './config/db.config.js';
-
+import dns from "dns";
+dns.setDefaultResultOrder("ipv4first");
+dns.setServers(["8.8.8.8", "8.8.4.4", "1.1.1.1"]);
 // Handle Uncaught Exceptions
 process.on('uncaughtException', (err) => {
   console.error('[CRITICAL] Uncaught Exception thrown:', err);
