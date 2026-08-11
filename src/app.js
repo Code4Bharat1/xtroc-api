@@ -70,6 +70,15 @@ if (envConfig.nodeEnv === 'development') {
 // Static directory for uploaded testimonial avatars
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
+// Welcome / Root Endpoint
+app.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'XTORC API Server is running.',
+    healthCheck: '/health'
+  });
+});
+
 // Health Check Endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({
