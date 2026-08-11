@@ -27,7 +27,7 @@ app.use(helmet({
 }));
 
 // CORS Setup
-const allowedOrigins = ["https://xtorcind.com","www://xtorcind.com/"]
+const allowedOrigins = ["https://xtorcind.com","www://xtorcind.com"]
 
 app.use(
   cors({
