@@ -15,6 +15,7 @@ import ApiError from './utils/apiError.js';
 import authRoutes from './modules/auth/auth.routes.js';
 import testimonialRoutes from './modules/testimonials/testimonial.routes.js';
 import careerRoutes from './modules/careers/career.routes.js';
+import contactRoutes from './modules/contact/contact.routes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,7 +28,7 @@ app.use(helmet({
 }));
 
 // CORS Setup
-const allowedOrigins = ["https://xtorcind.com","www://xtorcind.com"]
+const allowedOrigins = ["https://xtorcind.com", "https://www.xtorcind.com", "http://localhost:3000"]
 
 app.use(
   cors({
@@ -88,6 +89,7 @@ app.get('/health', (req, res) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/testimonials', testimonialRoutes);
 app.use('/api/v1/careers', careerRoutes);
+app.use('/api/v1/contact', contactRoutes);
 
 // Handle 404 Routes
 app.use('*', (req, res, next) => {
